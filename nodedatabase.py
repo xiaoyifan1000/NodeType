@@ -43,7 +43,6 @@ class NewNode:
         """
         _next = str(int(self.pointer)+1)
         _len = self.find_node_parent(self.pointer).__len__()
-        print(_len)
         if _next[-1] > str(_len):
             print("不可能移动到下一个")
             return None
@@ -181,6 +180,21 @@ class NewNode:
         self.__dict = dict()
 
     def del_node(self, node_number: str):
+        """
+        删除整个节点
+        :param node_number:
+        :return:
+        """
+        a = self.find_node_parent(node_number)
+        a[node_number] = None
+        del a[node_number]
+
+    def del_node_child(self, node_number: str):
+        """
+        删除节点下的数据
+        :param node_number:
+        :return:
+        """
         a = self.find_node_parent(node_number)
         a[node_number] = None
 
