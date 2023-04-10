@@ -3,7 +3,7 @@
 
 类型适用范围，巨大分支，只关系分支末尾的情况，但又需要比较关系的场景
 
-
+    注意单个节点的位置数为1-9，不得使用除此以外的任何数值，如需扩展，可用多个数据节点并行即可
     new = NewNode() 创建节点类
 
     new.add_node(NewNode.create_new_node("", 3), node_position="root") 向其中添加节点
@@ -61,6 +61,8 @@
 
      register() 程序开始自动注册，保存最后一次数据
      load_register() 自动回复
+
+
 
 
 
