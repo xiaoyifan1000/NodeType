@@ -4,36 +4,34 @@
 类型适用范围，巨大分支，只关心分支末尾的情况，但又需要比较关系的场景
 
     注意单个节点的位置数为1-9，不得使用除此以外的任何数值，如需扩展，可用多个数据节点并行即可
-    new = NewNode() 创建节点类
+    new = NodeType(5) 创建节点类
 
-    new.add_node(NewNode.create_new_node("", 3), node_position="root") 向其中添加节点
+    new.add_node(NodeType(2, "1"), "1") 向1的位置添加2个子节点
 
-    new.add_node(NewNode.create_new_node("1", 2), node_position="1") 向指定位置添加节点
+    new.add_node(NodeType(1, "2"), "2") 向2位置添加1个子节点节点
 
-    new.add_node(NewNode.create_new_node("2", 2), node_position="2")
-
-    new.add_node(NewNode.create_new_node("3", 3), node_position="3")
-
-    new.add_node(NewNode.create_new_node("12", 2), node_position="12")
-
-    new.add_node(NewNode.create_new_node("31", 4), node_position="31")
-
-    new.add_node(NewNode.create_new_node("32", 2), node_position="32")
+    new.add_node(NodeType(2, "11"), "11")
+    
+    new.add_node(NodeType(3, "21"), "21")
+    
+    new.add_node(NodeType(2, "211"), "211")
+    
+    new.add_node(NodeType(2, "3"), "3")
     
 
 得到结果
-    {'1': {'11': None, '12': {'121': None, '122': None}}, '2': {'21': None, '22': None}, '3': {'31': {'311': None, '312': None, '313': None, '314': None}, '32': {'321': None, '322': None}, '33': None}}
+    {'1': {'11': {'111': None, '112': None}, '12': None}, '2': {'21': {'211': {'2111': None, '2112': None}, '212': None, '213': None}}, '3': {'31': None, '32': None}, '4': None, '5': None}
     
 索引
 
-    new.find_node("root")  获得整个节点
-    new.find_node("12")  获得指定节点下的节点 返回 {'121': None, '122': None}
-    new.find_node_parent("21") 获得父级下的节点 返回 {'21': None, '22': None}
+    new.find_node_parent()  获得整个节点
+    new.find_node("11")  获得指定节点下的节点 返回 {'111': None, '112': None}
+    new.find_node_parent("21") 获得父级下的节点 返回  {'211': {'2111': None, '2112': None}, '212': None, '213': None}}
     
 指针操作 本指针均指向节点的字符串，均为对节点的字符串进行操作
 
     new.set_pointer("31")  设置指针位置 指针指向'31'
-    new.get_pointer()  返回指向的 {'311': None, '312': None, '313': None, '314': None}
+    new.get_pointer()  返回指向的 None
     new.next_pointer() 向右指针移动，指针指向“32”
 
     new.parent_pointer() 获得父级指针，此时指针指向3
@@ -46,21 +44,12 @@
     
 匹配/删除
 
-    new.traverse() # 获取所有匹配的节点 仅用于匹配节点末尾，如需匹配一个节点树，直接搜索即可，默认匹配为None，获得整个数据类未完成项
-    ['11', '121', '122', '21', '22', '311', '312', '313', '314', '321', '322', '33']
-
-    new.del_all() 删除所有节点
+    new.traverse() # 获取所有末端返回一个字典
+    {'111': None, '112': None, '12': None, '2111': None, '2112': None, '212': None, '213': None, '31': None, '32': None, '4': None, '5': None}
     
-    new.del_node_child('12') 删除指定节点下的所有数据
-        {'1': {'11': None, '12': None}, '2': {'21': None, '22': None}, '3': {'31': {'311': None, '312': None, '313': None, '314': None}, '32': {'321': None, '322': None}, '33': None}}
+    new.del_node_child('11') 删除指定节点下的所有数据
+        {'1': {'11': None, '12': None}, '2': {'21': {'211': {'2111': None, '2112': None}, '212': None, '213': None}}, '3': {'31': None, '32': None}, '4': None, '5': None}
         
-    new.del_node('12') 删除整个指定节点
-        {'1': {'11': None}, '2': {'21': None, '22': None}, '3': {'31': {'311': None, '312': None, '313': None, '314': None}, '32': {'321': None, '322': None}, '33': None}}
-    
-数据紧急储存/读取
-
-     register() 程序开始自动注册，保存最后一次数据
-     load_register() 自动回复
 
 
 
