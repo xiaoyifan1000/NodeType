@@ -50,6 +50,7 @@
         {'1': {'11': None, '12': None}, '2': {'21': {'211': {'2111': None, '2112': None}, '212': None, '213': None}}, '3': {'31': None, '32': None}, '4': None, '5': None}
         
 节点时间戳
+
     new.get_timestamp() 获取节点的时间戳
     new.find_node("11").get_timestamp() 获取子节点的时间戳
 
