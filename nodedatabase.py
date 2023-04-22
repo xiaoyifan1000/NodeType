@@ -1,16 +1,18 @@
-from typing import Union, Optional
-import atexit
-import json
+import warnings
+from typing import Optional, TypeVar, Any
+from nodetype import nodetype
+import time
+
+T = TypeVar('T', bound='NodeType')
 
 
-class NewNode:
+class NodeType(nodetype):
     """
-        节点数据库
-        注意：节点数据库节点不得储存除节点末端以外的任何数据
+    树状节点储存类
     """
 
-    def __init__(self):
-        self.__dict = dict()
+    def __init__(self, count=0, parent_node=""):
+        super(NodeType, self).__init__(count, parent_node)
         self.pointer = ""
 
     def set_pointer(self, node_position):
@@ -56,7 +58,7 @@ class NewNode:
         :return: 返回上一个指向的位置
         """
         _next = int(self.pointer)-1
-        _len = self.find_node(self.pointer).__len__()
+        _len = self.find_node_parent(self.pointer).__len__()
         if _next < 1:
             print("不可能移动到上一个")
             return None
@@ -86,98 +88,73 @@ class NewNode:
         self.pointer = self.pointer[:-1]
         return self.pointer
 
-    def finish_node(self):
-        pass
-
-    def add_node(self, new_node, node_position="root"):
+    def add_node(self, new_node: T, node_position) -> T:
         """
-        :param new_node: 由create_new_node创建
+        :param new_node: 必须为NodeType
         :param node_position: 父节点位置
         :return: 返回整个节点
         """
-        if node_position == "root":
-            self.__dict = new_node
-            return self.__dict
-
         self.find_node_parent(node_position)[node_position] = new_node
-        return self.__dict
+        return self
 
-    @staticmethod
-    def create_new_node(parent_node, count: int) -> dict:
-        """
-        :param parent_node: 父节点位置
-        :param count: 新节点数量
-        :return: 新的节点
-        最多可以容纳9个选项，足够满足
-        """
-        if parent_node == "root":
-            parent_node = ""
-
-        _list = [f"{parent_node}{_a}" for _a in range(1, count+1)]
-        return dict.fromkeys(_list)
-
-    def find_node(self, node_number: str) -> Optional[dict]:
+    def find_node(self, node_number: str) -> Optional[T]:
         """
         :param node_number: 节点数字
         :return: 返回查询到的节点, 可能是None，可能是一个字典，如果为None则已经到底，如果是一个字典则为中间节点
         """
-        if node_number == "root":
-            return self.__dict
-
         _list_node = [_a for _a in node_number]
-        _now_node = self.__dict[_list_node[0]]
+        _now_node = self[_list_node[0]]
         if len(_list_node) > 1:
             for _d in range(1, len(_list_node)-1):
                 _now_node = _now_node[node_number[:_d+1]]
             return _now_node[node_number]
         return _now_node
 
-    def find_node_parent(self, node_number: Union[str, dict]) -> dict:
+    def find_node_parent(self, node_number=Optional[str]) -> Optional[T]:
         """
         :param node_number: 节点数字| 节点
         :return: 返回查询到的父节点
         """
+        if not node_number:
+            return self.find_node_parent(list(self.keys())[0][-1])
         if isinstance(node_number, str):
-            if node_number == "root":
-                return self.__dict
-
-            _list_node = [_a for _a in node_number]
-            if len(_list_node) == 1:
-                return self.__dict
-
-            _now_node = self.__dict[_list_node[0]]
-            for _d in range(1, len(_list_node)-1):
-                _now_node = _now_node[_list_node[:_d]]
-            return _now_node
-
-        if isinstance(node_number, dict):
+            _len = len(node_number)
+            _now = self
+            if _len == 1:
+                return self
+            for _ in range(_len-1):
+                _now = _now[str(node_number[:_+1])]
+            return _now
+        if isinstance(node_number, NodeType):
             return self.find_node_parent(list(node_number.keys())[0][:-1])
 
-    def traverse(self, match=None) -> list:
+    def padding(self, node_number, _v: Any):
         """
-        获得所有指定匹配的节点
+        对节点进行填充
+        :param node_number: 节点位置
+        :param _v:
+        :return:None
+        """
+        self.set_timestamp()
+        self.find_node_parent(node_number)[node_number] = _v
+
+    def traverse(self, match=None) -> dict:
+        """
+        对节点末端进行筛选和处理
         :param match:
-        :return: 返回列表
+        :return: 返回一个字典
         """
-        _list = []
+        _dict = dict()
 
         def run(node: dict):
             if node != match:
-                for a, b in node.items():
-                    if run(b) == "isNone":
-                        _list.append(a)
+                for _a, _b in node.items():
+                    if run(_b) == "isNone":
+                        _dict.update({_a: _b})
             else:
                 return "isNone"
-
-        run(self.__dict)
-        return _list
-
-    def del_all(self):
-        """
-        销毁所有数据
-        :return:
-        """
-        self.__dict = dict()
+        run(self)
+        return _dict
 
     def del_node(self, node_number: str):
         """
@@ -185,9 +162,10 @@ class NewNode:
         :param node_number:
         :return:
         """
-        a = self.find_node_parent(node_number)
-        a[node_number] = None
-        del a[node_number]
+        warnings.warn("对节点本身删除是不安全的", DeprecationWarning)
+        _a = self.find_node_parent(node_number)
+        _a[node_number] = None
+        del _a[node_number]
 
     def del_node_child(self, node_number: str):
         """
@@ -195,61 +173,33 @@ class NewNode:
         :param node_number:
         :return:
         """
-        a = self.find_node_parent(node_number)
-        a[node_number] = None
-
-    def register(self):
-        """
-        强制回收未完成的节点数据,调用后自动注册
-        :return:
-        """
-        def _register():
-            if self.__dict:
-                with open('register.json', 'w') as f:
-                    f.write(json.dumps(self.__dict))
-        atexit.register(_register)
-
-    def load_register(self):
-        """
-        回收后恢复，请确保储存文件未丢失
-        :return:
-        """
-        with open('register.json', 'r') as f:
-            self.__dict = json.loads(f.read())
+        _a = self.find_node_parent(node_number)
+        _a[node_number] = None
 
 
 if __name__ == "__main__":
-    new = NewNode()
-    return_ = new.add_node(NewNode.create_new_node("", 3), node_position="root")
+    new = NodeType(5)
+    new.add_node(NodeType(2, "1"), "1")
+    new.add_node(NodeType(1, "2"), "2")
+    new.add_node(NodeType(2, "11"), "11")
+    new.add_node(NodeType(3, "21"), "21")
+    new.add_node(NodeType(2, "211"), "211")
+    new.add_node(NodeType(2, "3"), "3")
+    print(new)
 
-    new.add_node(NewNode.create_new_node("1", 2), node_position="1")
-
-    new.add_node(NewNode.create_new_node("2", 2), node_position="2")
-
-    new.add_node(NewNode.create_new_node("3", 3), node_position="3")
-
-    new.add_node(NewNode.create_new_node("12", 2), node_position="12")
-
-    new.add_node(NewNode.create_new_node("31", 4), node_position="31")
-
-    new.add_node(NewNode.create_new_node("32", 2), node_position="32")
-
-    print(new.find_node("root"))
     new.set_pointer("31")
     new.get_pointer()
+    new.next_pointer()
+    new.find_node_parent("21")
+    new.parent_pointer()
 
-    print(new.next_pointer())
+    new.child_pointer()
 
-    print(new.parent_pointer())
-
-    print(new.child_pointer())
-
-    print(new.next_pointer())
-
-    print(new.previous_pointer())
+    new.next_pointer()
+    print(new.pointer)
+    new.previous_pointer()
 
     print(new.traverse())
+    print(new.find_node("11"))
 
-    print(new.del_all())
-    print(new.find_node("root"))
 
